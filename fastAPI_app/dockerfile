@@ -1,0 +1,23 @@
+# 使用 Python 3.10 作為基礎映像
+FROM python:3.10
+
+# 設定環境變數，確保 Python 能夠找到 fastapi_app
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app 
+
+# 設定工作目錄
+WORKDIR /app
+
+# 複製 requirements.txt
+COPY requirements.txt .
+
+# 安裝 Python 依賴
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+# 複製 fastAPI_app 目錄
+COPY . .
+# COPY fastapi_app /app/fastapi_app
+
+# 設定 FastAPI 預設啟動指令
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# CMD ["uvicorn", "fastapi_app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

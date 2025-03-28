@@ -1,0 +1,4 @@
+.qodo
+.env
+
+fastAPI_app/__pycache__/

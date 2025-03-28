@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]  
+elasticsearch
+google-generativeai
+python-dotenv
+sentence-transformers 
+langchain   
