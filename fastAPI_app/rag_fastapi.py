@@ -74,11 +74,11 @@ def retrieve_similar_docs(query, index="ai_labor-law_index", top_k=3):
 
         return [
             {
-                "法規名稱": hit["_source"].get("法規名稱", ""),
-                "修正日期": hit["_source"].get("修正日期", ""),
-                "章節標題": hit["_source"].get("章節標題", ""),
-                "條號": hit["_source"].get("條號", ""),
-                "內容": hit["_source"].get("內容", ""),
+                "法規名稱": hit["_source"].get("name", ""),
+                "修正日期": hit["_source"].get("date", ""),
+                "章節標題": hit["_source"].get("chapter_title", ""),
+                "條號": hit["_source"].get("number", ""),
+                "內容": hit["_source"].get("content", ""),
             }
             for hit in response["hits"]["hits"]
         ]
@@ -91,6 +91,7 @@ def retrieve_similar_docs(query, index="ai_labor-law_index", top_k=3):
 def rag_fastapi(user_query):
     # RAG 檢索
     docs = retrieve_similar_docs(user_query)
+    print(docs)
 
     if not docs:
         return  {
