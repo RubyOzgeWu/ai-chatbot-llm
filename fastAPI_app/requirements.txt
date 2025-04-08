@@ -4,4 +4,5 @@ elasticsearch
 google-generativeai
 python-dotenv
 sentence-transformers 
-langchain   
+requests  
+pydantic
