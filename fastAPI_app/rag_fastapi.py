@@ -1,7 +1,8 @@
 """ Postman 單純 fastAPI """
 from elasticsearch import Elasticsearch
 from sentence_transformers import SentenceTransformer
-import google.generativeai as genai
+# import google.generativeai as genai
+from openai import OpenAI
 from dotenv import load_dotenv
 import os
 
@@ -10,9 +11,12 @@ import os
 load_dotenv()
 
 # 讀取環境變數
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-if not GOOGLE_API_KEY:
-    raise ValueError("❌ 缺少 GOOGLE_API_KEY 環境變數，請確認 .env 設定！")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+if not OPENAI_API_KEY:
+    raise ValueError("❌ 缺少 OPENAI_API_KEY 环境变量，请确认 .env 设置！")
+# GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+# if not GOOGLE_API_KEY:
+#     raise ValueError("❌ 缺少 GOOGLE_API_KEY 環境變數，請確認 .env 設定！")
 
 # 判斷是否在 Docker 容器內運行
 RUNNING_IN_DOCKER = os.path.exists('/.dockerenv')
@@ -43,9 +47,11 @@ except Exception as e:
     print(f"❌ 無法連接到 Elasticsearch: {e}")
 
 """ 導入 LLM 模型 """
-genai.configure(api_key=GOOGLE_API_KEY)
-model_name = "gemini-1.5-pro"  
-llm = genai.GenerativeModel(model_name)
+client = OpenAI(api_key=OPENAI_API_KEY)
+model_name = "gpt-3.5-turbo"
+# genai.configure(api_key=GOOGLE_API_KEY)
+# model_name = "gemini-1.5-pro"  
+# llm = genai.GenerativeModel(model_name)
 
 
 """ RAG 向量檢索方法 """
@@ -106,9 +112,41 @@ def rag_fastapi(user_query):
     ])
 
     prompt = f"根據以下資訊回答問題:\n{context}\n\n問題: {user_query}"
-    response = llm.generate_content(prompt)
 
-    return {
-      "answer": response.text
-    }
+    try:
+        response = client.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": "你是一个乐于助人的助手。"},
+                {"role": "user", "content": prompt}
+            ]
+        )
+
+        return {
+            "answer": response.choices[0].message.content.strip()
+        }
+
+    except Exception as e:
+        print(f"❌ OpenAI 回傳錯誤: {e}")
+        return {
+            "answer": "產生回應時發生錯誤。",
+            "references": []
+        }
+    # response = openai.ChatCompletion.create(
+    #     model=model_name,
+    #     messages=[
+    #         {"role": "system", "content": "你是一个乐于助人的助手。"},
+    #         {"role": "user", "content": prompt}
+    #     ]
+    # )
+
+    # return {
+    #     "answer": response["choices"][0]["message"]["content"].strip()
+    # }
+
+    # response = llm.generate_content(prompt)
+
+    # return {
+    #   "answer": response.text
+    # }
 
