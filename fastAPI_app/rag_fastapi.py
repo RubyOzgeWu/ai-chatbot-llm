@@ -49,7 +49,7 @@ llm = genai.GenerativeModel(model_name)
 
 
 """ RAG 向量檢索方法 """
-def retrieve_similar_docs(query, index="ai_labor-law_index", top_k=3):
+def retrieve_similar_docs(query, index="ai_immigration-law_index", top_k=3):
     query_embedding = embedding_model.encode(query).tolist()
 
     search_body = {
