@@ -83,12 +83,21 @@ model = SentenceTransformer("sentence-transformers/distiluse-base-multilingual-c
 #     return success, failed
 
 """ 處理 immigration-law.json 格式 """
-def handle_immigration_law(json_data, index_name):
-    documents = json_data.get("章節", [])
-    if not documents:
-        print(f"⚠️ 檔案缺少 '章節'")
+def handle_law(json_data, index_name):
+    # 判斷是否為章節制
+    is_chapter_based = "章節" in json_data
+
+    # 根據結構取得條文清單
+    if is_chapter_based:
+        documents = json_data.get("章節", [])
+    else:
+        documents = [{"章名": None, "條文": json_data.get("條文", [])}]
+
+    if not documents or all(not chapter.get("條文") for chapter in documents):
+        print(f"⚠️ 檔案缺少條文資料")
         return 0, 0
 
+    # 建立 index（若尚未存在）
     if not es.indices.exists(index=index_name):
         es.indices.create(index=index_name, body={
             "mappings": {
@@ -108,16 +117,17 @@ def handle_immigration_law(json_data, index_name):
 
     success, failed = 0, 0
     for chapter in documents:
+        chapter_title = chapter.get("章名", "") or ""
         for clause in chapter.get("條文", []):
             clause_id = clause.get("條號")
             content = clause.get("內容", "")
-            
+
             if not clause_id or not content:
                 failed += 1
                 continue
 
             embedding = model.encode(content).tolist()
-            doc_id = f"{chapter.get('章名', '')}_{clause_id}".replace(" ", "")
+            doc_id = f"{chapter_title}_{clause_id}".replace(" ", "")
 
             # 若已存在就跳過處理
             if es.exists(index=index_name, id=doc_id):
@@ -127,7 +137,7 @@ def handle_immigration_law(json_data, index_name):
                 es.index(index=index_name, id=doc_id, body={
                     "name": json_data.get("法規名稱", ""),
                     "date": json_data.get("修正日期", ""),
-                    "chapter_title": chapter.get("章名", ""),
+                    "chapter_title": chapter_title,
                     "number": clause_id,
                     "content": content,
                     "embedding": embedding
@@ -166,8 +176,8 @@ for filename in files:
     # 根據檔案名稱決定格式處理方式
     # if "labor-law" in base:
     #     success, failed = handle_labor_law(json_data, index_name)
-    if "immigration-law" in base:
-        success, failed = handle_immigration_law(json_data, index_name)
+    if any(keyword in base for keyword in ["immigration-law", "immigration-regulations", "nationality-law"]):
+        success, failed = handle_law(json_data, index_name)
     else:
         print(f"⚠️ 尚未支援此檔案格式：{filename}")
         continue
