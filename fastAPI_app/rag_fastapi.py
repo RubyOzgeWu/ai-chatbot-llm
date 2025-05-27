@@ -38,7 +38,7 @@ except Exception as e:
 
 """ 導入 LLM 模型 """
 genai.configure(api_key=GOOGLE_API_KEY)
-model_name = "gemini-1.5-pro"  
+model_name = "gemini-1.5-flash"  
 llm = genai.GenerativeModel(model_name)
 
 
