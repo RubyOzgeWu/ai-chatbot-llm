@@ -1,31 +1,4 @@
 services:
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.16.1
-    container_name: elasticsearch
-    environment:
-      discovery.type: single-node
-      xpack.security.enabled: false
-    volumes:
-      - es_data:/usr/share/elasticsearch/data
-    ports:
-    - "${PORT_ELASTICSEARCH_HTTP:-9200}:9200"
-    - "${PORT_ELASTICSEARCH_TCP:-9300}:9300"
-    networks:
-      - ai_network
-    restart: unless-stopped
-
-  kibana:
-    depends_on:
-      - elasticsearch
-    container_name: kibana
-    image: docker.elastic.co/kibana/kibana:8.16.1
-    env_file:
-      - .env  
-    ports:
-    - "${PORT_KIBANA:-5601}:5601"
-    networks:
-      - ai_network
-
   fastapi:
     build: 
       context: ./fastAPI_app 
@@ -37,11 +10,10 @@ services:
     env_file:
       - .env  
     environment:
-      - ELASTICSEARCH_HOSTS=${ELASTICSEARCH_HOSTS}
+      - ELASTICSEARCH_HOST=${ELASTICSEARCH_HOST}
+      - ELASTICSEARCH_API_KEY=${ELASTICSEARCH_API_KEY} 
     volumes:
       - ./fastAPI_app:/app   
-    depends_on:
-      - elasticsearch
     networks:
       - ai_network
     restart: always

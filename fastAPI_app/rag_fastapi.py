@@ -17,19 +17,13 @@ if not GOOGLE_API_KEY:
 # 判斷是否在 Docker 容器內運行
 RUNNING_IN_DOCKER = os.path.exists('/.dockerenv')
 
-if RUNNING_IN_DOCKER:
-    ELASTICSEARCH_HOST = os.getenv("ELASTICSEARCH_HOSTS", "http://elasticsearch:9200")
-else:
-    ELASTICSEARCH_HOST = os.getenv("ELASTICSEARCH_HOSTS_LOCAL", "http://localhost:9200")
-
-
 # 確認環境變數是否正確載入
 # print(f"🔍 GOOGLE_API_KEY: {GOOGLE_API_KEY}")
 # print(f"🔍 ELASTICSEARCH_HOST: {ELASTICSEARCH_HOST}")
 
 
 """ 連接 Elasticsearch """
-es = Elasticsearch(ELASTICSEARCH_HOST)
+es = Elasticsearch(os.getenv("ELASTICSEARCH_HOST"), api_key=os.getenv("ELASTICSEARCH_API_KEY"))
 
 """ 向量化模型 """
 embedding_model = SentenceTransformer("sentence-transformers/distiluse-base-multilingual-cased-v2")
@@ -86,7 +80,7 @@ def normalize_article(article_text):
         return f"第{raw}條"
     return f"第{chinese_to_int(raw)}條"
 
-def retrieve_similar_docs(query, index=["ai_immigration-law_index", "ai_immigration-regulations_index", "ai_nationality-law_index"], top_k=3, use_reference_expansion=True):
+def retrieve_similar_docs(query, index=["ai-laws-immigration-law", "ai-laws-immigration-regulations", "ai-laws-nationality-law"], top_k=3, use_reference_expansion=True):
     query_embedding = embedding_model.encode(query).tolist()
 
     search_body = {
@@ -219,9 +213,13 @@ def rag_fastapi(user_query):
     ])
 
     prompt = f"根據以下資訊回答問題:\n{context}\n\n問題: {user_query}"
-    response = llm.generate_content(prompt)
-
-    return {
-      "answer": response.text
-    }
+    try:
+        response = llm.generate_content(prompt)
+        return { "answer": response.text }
+    except Exception as e:
+        print(f"❌ LLM 回應失敗: {e}")
+        return {
+            "answer": "目前服務繁忙或已超過使用配額，請稍後再試。",
+            "references": []
+        }
 
