@@ -27,7 +27,6 @@ else:
 # print(f"🔍 GOOGLE_API_KEY: {GOOGLE_API_KEY}")
 # print(f"🔍 ELASTICSEARCH_HOST: {ELASTICSEARCH_HOST}")
 
-
 """ 連接 Elasticsearch """
 es = Elasticsearch(ELASTICSEARCH_HOST)
 
